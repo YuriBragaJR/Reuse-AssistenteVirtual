@@ -75,7 +75,6 @@ export default function ItemDetail({ params }: { params: { id: string } }) {
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold text-eco-600 bg-eco-50 px-2 py-1 rounded uppercase tracking-wider">{item.category}</span>
             
-            {/* BOTÃO SALVAR CORRIGIDO AQUI */}
             <button 
               onClick={toggleFavorito}
               className={`flex items-center gap-1 text-sm font-semibold transition-colors cursor-pointer ${

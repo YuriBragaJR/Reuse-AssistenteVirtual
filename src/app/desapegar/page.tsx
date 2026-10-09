@@ -18,7 +18,7 @@ export default function Desapegar() {
   const [sucesso, setSucesso] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Converte a imagem enviada para Base64 para poder salvar no LocalStorage
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -36,7 +36,6 @@ export default function Desapegar() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Função que chama a API do Gemini para gerar a descrição
   const gerarDescricaoMagica = async () => {
     if (!titulo.trim()) {
       alert("Por favor, digite um título primeiro para a IA saber o que é o item!");
@@ -54,7 +53,6 @@ export default function Desapegar() {
       const data = await res.json();
       
       if (data.descricao) {
-        // Junta a descrição e as tags na mesma caixa de texto
         const textoGerado = `${data.descricao}\n\n${data.tags || ''}`;
         setDescricao(textoGerado);
       }
@@ -85,7 +83,6 @@ export default function Desapegar() {
       imageUrl: imagem
     };
 
-    // Pega itens salvos anteriormente ou cria um array vazio
     const itensSalvos = JSON.parse(localStorage.getItem('meus_desapegos') || '[]');
     itensSalvos.push(novoItem);
     localStorage.setItem('meus_desapegos', JSON.stringify(itensSalvos));

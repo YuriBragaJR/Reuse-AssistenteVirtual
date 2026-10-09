@@ -59,7 +59,7 @@ export default function Navbar() {
 
       </div>
 
-      {/* Barra de Pesquisa mobile (aparece em telas pequenas abaixo do header) */}
+      {/* Barra de Pesquisa mobile*/}
       <div className="px-4 pb-3 md:hidden">
         <form onSubmit={handleSearch} className="relative">
           <input

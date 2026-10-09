@@ -87,7 +87,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categorias (Agora com Links Funcionais) */}
+      {/* Categorias */}
       <section className="py-8 max-w-7xl mx-auto px-4">
         <h2 className="text-xl font-black mb-6 text-earth-900">Navegue por categorias</h2>
         <div className="flex gap-4 overflow-x-auto pb-4" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>

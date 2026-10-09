@@ -20,7 +20,6 @@ function ConteudoExplorar() {
   const [ordenacao, setOrdenacao] = useState('relevantes');
   const [busca, setBusca] = useState(termoBuscaURL);
 
-  // Atualiza o estado de busca se o usuário pesquisar novamente na mesma página
   useEffect(() => {
     setBusca(searchParams.get('busca') || '');
   }, [searchParams]);

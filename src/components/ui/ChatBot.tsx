@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Bot, MessageCircle } from 'lucide-react';
 
-// Definimos o tipo da mensagem para suportar tanto texto quanto botões de ação
 type Action = { label: string; route: string };
 type Message = { sender: 'user' | 'bot'; text: string; actions?: Action[] };
 
@@ -71,12 +71,13 @@ export default function ChatBot() {
     }
   };
 
-  if (!isOpen) {
+if (!isOpen) {
     return (
       <button 
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 bg-eco-600 text-white p-4 rounded-full shadow-lg hover:bg-eco-700 z-50 flex items-center gap-2 font-bold transition-transform hover:scale-105">
-        💬 Ajuda
+        <Bot className="w-5 h-5 text-white" />
+        Ajuda
       </button>
     );
   }
@@ -85,7 +86,7 @@ export default function ChatBot() {
     <div className="fixed bottom-6 right-6 w-80 md:w-[350px] bg-white border border-gray-200 rounded-xl shadow-2xl flex flex-col h-[500px] z-50 overflow-hidden">
       {/* Cabeçalho do Chat */}
       <div className="bg-earth-900 text-white p-4 font-bold flex justify-between items-center shadow-md">
-        <span className="flex items-center gap-2">🤖 Assistente ReUse</span>
+        <span className="flex items-center gap-2"><Bot className="w-5 h-5 text-white" /> Assistente ReUse</span>
         <button onClick={() => setIsOpen(false)} className="text-white hover:text-gray-300 font-bold text-xl leading-none">&times;</button>
       </div>
       

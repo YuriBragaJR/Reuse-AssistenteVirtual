@@ -8,7 +8,6 @@ export async function POST(req: Request) {
     userText = (body.text || '').trim();
     const mensagemLower = userText.toLowerCase();
 
-    // Regra local para detectar a intenção do usuário
     const isCriarDesapego = 
       mensagemLower.includes('desapegar') || 
       mensagemLower.includes('doar') || 
@@ -19,7 +18,6 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Se tiver chave configurada, tenta chamar a API do Google Gemini
     if (apiKey) {
       try {
         const systemInstruction = `Você é o assistente virtual da plataforma ReUse, focado em economia circular, trocas e doações de objetos.
@@ -27,7 +25,7 @@ Sua função é orientar os usuários e identificar a intenção deles.
 Se o usuário demonstrar interesse em criar um novo desapego, doar, cadastrar um item, vender ou oferecer algo, defina "isCriarDesapego" como true. Caso contrário, defina como false.
 Responda sempre em formato JSON estrito.`;
 
-        // Tenta modelos em ordem de estabilidade
+
         const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
 
         for (const model of models) {
@@ -70,7 +68,6 @@ Responda sempre em formato JSON estrito.`;
       }
     }
 
-    // Fallback inteligente local (garante 100% de funcionamento mesmo com instabilidade ou limite de cota da API)
     let respostaTexto = "Olá! Sou o assistente do ReUse. Como posso ajudar com seus desapegos hoje?";
 
     if (isCriarDesapego) {

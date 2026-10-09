@@ -10,28 +10,35 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Se tiver chave configurada, tenta chamar a API do Google Gemini
     if (apiKey) {
       try {
-        const systemInstruction = `Você é um especialista em economia circular e copywriting da plataforma ReUse.
+        const systemInstruction = `Você é um copywriter criativo e especialista em economia circular da plataforma ReUse.
 O usuário quer desapegar, doar ou vender um item chamado: "${titulo}".
-Sua missão é gerar uma descrição curta (máximo 3 frases), atrativa, ressaltando o valor sustentável de dar uma nova vida a esse objeto. 
-Gere também de 3 a 5 hashtags (tags) relevantes.
+Sua missão é gerar uma descrição curta (máximo 3 frases) e ALTAMENTE ATRATIVA.
+
+REGRAS DE CRIATIVIDADE (OBRIGATÓRIO):
+- Varie o tom de voz a cada geração: pode ser bem humorado, nostálgico, super prático, entusiasmado ou focado no design.
+- NUNCA repita frases clichês como "Dando uma nova vida", "Ótima oportunidade", "Ajudar o meio ambiente" ou "Economia circular". Seja sutil.
+- Crie um texto único, focado nos benefícios reais e no charme do objeto. Use adjetivos variados.
+- Gere de 3 a 5 hashtags criativas.
+
 Responda EXATAMENTE neste formato JSON estrito:
 {
-  "descricao": "Texto da descrição aqui...",
+  "descricao": "Texto criativo da descrição aqui...",
   "tags": "#tag1 #tag2 #tag3"
 }`;
 
-        const apiDomain = 'https://generativelanguage.' + 'google' + 'apis' + '.com/v1beta/models/gemini-1.5-flash:generateContent';
+        const apiDomain = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
         
         const response = await fetch(`${apiDomain}?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: `Gere a descrição para o item: ${titulo}` }] }],
+            contents: [{ role: 'user', parts: [{ text: `Gere uma descrição ÚNICA, CRIATIVA E SURPREENDENTE para o item: ${titulo}` }] }],
             systemInstruction: { parts: [{ text: systemInstruction }] },
             generationConfig: {
+              temperature: 0.9, 
+              topP: 0.95,
               responseMimeType: 'application/json',
               responseSchema: {
                 type: 'OBJECT',
@@ -58,10 +65,16 @@ Responda EXATAMENTE neste formato JSON estrito:
       }
     }
 
-    // Fallback local se a API falhar ou bater limite de requisições
+    const fallbacks = [
+      `Que tal levar este item incrível: ${titulo}? Ele está pronto para fazer parte de uma nova história. Aproveite para economizar e praticar o consumo consciente!`,
+      `Achei que você ia gostar de ver: ${titulo}. Perfeito para quem busca qualidade com um ótimo custo-benefício. Faz a sua oferta!`,
+      `Item imperdível na área: ${titulo}. Desapegar é uma arte, e levar essa beleza pra casa é melhor ainda. Chama no chat!`
+    ];
+    const randomFallback = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+
     return NextResponse.json({
-      descricao: `Ótima oportunidade para adquirir este item: ${titulo}! Dando uma nova vida a este objeto, você contribui ativamente para a economia circular e ajuda a preservar o meio ambiente. Aproveite!`,
-      tags: "#ReUse #EconomiaCircular #DesapegoSustentavel"
+      descricao: randomFallback,
+      tags: "#ReUse #Achado #Desapego"
     });
 
   } catch (error) {
