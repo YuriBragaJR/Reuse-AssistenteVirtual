@@ -36,7 +36,7 @@ export default function ChatBot() {
     }, 3200);
 
     const t5 = setTimeout(() => {
-      setMessages(prev => [...prev, { sender: 'bot', action: { label: '🎟️ Meus Resgates', route: '/painel/resgates' } }]);
+      setMessages(prev => [...prev, { sender: 'bot', action: { label: '🎟️ Meus Resgates', route: '/painel' } }]);
     }, 4200);
 
     const t6 = setTimeout(() => {
