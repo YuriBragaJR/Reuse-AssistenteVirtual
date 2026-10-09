@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Bot } from 'lucide-react';
 
 type Action = { label: string; route: string };
-type Message = { sender: 'user' | 'bot'; text: string; action?: Action };
+// Correção aplicada aqui: text agora é opcional (text?: string) para aceitar mensagens contendo apenas botões de ação
+type Message = { sender: 'user' | 'bot'; text?: string; action?: Action };
 
 export default function ChatBot() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function ChatBot() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
 
-  // Sequência de boas-vindas inicial (mantida como você pediu)
+  // Sequência de boas-vindas inicial (mantida com animação segundo a segundo)
   useEffect(() => {
     if (!isOpen) return;
     setMessages([]);
