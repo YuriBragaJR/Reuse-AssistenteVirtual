@@ -8,77 +8,88 @@ export async function POST(req: Request) {
     userText = (body.text || '').trim();
     const mensagemLower = userText.toLowerCase();
 
-    const isCriarDesapego = 
-      mensagemLower.includes('desapegar') || 
-      mensagemLower.includes('doar') || 
-      mensagemLower.includes('cadastrar') || 
-      mensagemLower.includes('vender') ||
-      mensagemLower.includes('criar') ||
-      mensagemLower.includes('oferecer');
+    // Detecção local de intenções comuns de navegação
+    let targetRoute = '';
+    if (mensagemLower.includes('desapegar') || mensagemLower.includes('doar') || mensagemLower.includes('vender') || mensagemLower.includes('cadastrar')) {
+      targetRoute = '/desapegar';
+    } else if (mensagemLower.includes('meus desapegos') || mensagemLower.includes('meus anúncios')) {
+      targetRoute = '/painel/desapegos';
+    } else if (mensagemLower.includes('resgates')) {
+      targetRoute = '/painel/resgates';
+    } else if (mensagemLower.includes('salvos') || mensagemLower.includes('favoritos')) {
+      targetRoute = '/painel/salvos';
+    } else if (mensagemLower.includes('painel') || mensagemLower.includes('perfil')) {
+      targetRoute = '/painel';
+    }
 
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (apiKey) {
       try {
-        const systemInstruction = `Você é o assistente virtual da plataforma ReUse, focado em economia circular, trocas e doações de objetos.
-Sua função é orientar os usuários e identificar a intenção deles.
-Se o usuário demonstrar interesse em criar um novo desapego, doar, cadastrar um item, vender ou oferecer algo, defina "isCriarDesapego" como true. Caso contrário, defina como false.
-Responda sempre em formato JSON estrito.`;
+        const systemInstruction = `Você é o assistente virtual da plataforma ReUse, focado em economia circular, trocas e doações.
+Sua função é orientar os usuários e identificar para qual página eles desejam ir.
+As rotas disponíveis no site são:
+- "/desapegar" (para criar doações, cadastrar itens ou vender)
+- "/painel/desapegos" (para ver os desapegos cadastrados pelo usuário)
+- "/painel/resgates" (para ver itens resgatados)
+- "/painel/salvos" (para ver itens salvos/favoritos)
+- "/painel" (para o painel geral)
 
+Analise a mensagem do usuário e preencha "reply" com a resposta amigável e "route" com a URL exata para onde ele deve ser redirecionado (se houver intenção clara de navegação). Se não houver, deixe "route" como string vazia.
+Responda sempre em formato JSON estrito:
+{
+  "reply": "Texto da resposta...",
+  "route": "/caminho-ou-vazio"
+}`;
 
-        const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
-
-        for (const model of models) {
-          const apiDomain = 'https://generativelanguage.' + 'google' + 'apis' + '.com/v1beta/models/' + model + ':generateContent';
-          
-          const response = await fetch(`${apiDomain}?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ role: 'user', parts: [{ text: userText }] }],
-              systemInstruction: { parts: [{ text: systemInstruction }] },
-              generationConfig: {
-                responseMimeType: 'application/json',
-                responseSchema: {
-                  type: 'OBJECT',
-                  properties: {
-                    reply: { type: 'STRING' },
-                    isCriarDesapego: { type: 'BOOLEAN' },
-                  },
-                  required: ['reply', 'isCriarDesapego'],
+        const apiDomain = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+        
+        const response = await fetch(`${apiDomain}?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: userText }] }],
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  reply: { type: 'STRING' },
+                  route: { type: 'STRING' },
                 },
+                required: ['reply', 'route'],
               },
-            }),
-          });
+            },
+          }),
+        });
 
-          if (response.ok) {
-            const data = await response.json();
-            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (rawText) {
-              const parsed = JSON.parse(rawText);
-              return NextResponse.json({
-                reply: [{ response_type: 'text', text: parsed.reply || 'Como posso ajudar?' }],
-                isCriarDesapego: !!parsed.isCriarDesapego,
-              });
-            }
+        if (response.ok) {
+          const data = await response.json();
+          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawText) {
+            const parsed = JSON.parse(rawText);
+            return NextResponse.json({
+              reply: [{ response_type: 'text', text: parsed.reply || 'Como posso ajudar?' }],
+              route: parsed.route || targetRoute,
+            });
           }
         }
       } catch (apiError) {
-        console.warn('API do Google indisponível ou com limite excedido. Usando modo resiliente local.');
+        console.warn('API do Google instável. Usando inteligência local.');
       }
     }
 
-    let respostaTexto = "Olá! Sou o assistente do ReUse. Como posso ajudar com seus desapegos hoje?";
-
-    if (isCriarDesapego) {
-      respostaTexto = "Com certeza! Vou te redirecionar agora para a página onde você pode cadastrar seu novo desapego...";
-    } else if (mensagemLower.includes('oi') || mensagemLower.includes('olá') || mensagemLower.includes('ola')) {
-      respostaTexto = "Olá! Você deseja explorar itens disponíveis ou criar um novo desapego?";
-    }
+    // Fallback inteligente caso a API falhe
+    let respostaTexto = "Entendido! Como posso te ajudar com isso?";
+    if (targetRoute === '/desapegar') respostaTexto = "Claro! Vou te levar para a página de cadastro de desapegos...";
+    else if (targetRoute === '/painel/desapegos') respostaTexto = "Abrindo seus desapegos...";
+    else if (targetRoute === '/painel/resgates') respostaTexto = "Indo para os seus resgates...";
+    else if (targetRoute === '/painel/salvos') respostaTexto = "Mostrando seus itens salvos...";
 
     return NextResponse.json({
       reply: [{ response_type: 'text', text: respostaTexto }],
-      isCriarDesapego,
+      route: targetRoute,
     });
 
   } catch (error) {

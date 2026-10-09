@@ -11,42 +11,33 @@ export default function ChatBot() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-
   const [messages, setMessages] = useState<Message[]>([]);
 
-  // Sequência de exibição controlada segundo a segundo
+  // Sequência de boas-vindas inicial (mantida como você pediu)
   useEffect(() => {
     if (!isOpen) return;
-
-    // Limpa as mensagens ao abrir
     setMessages([]);
 
-    // 0s: Mensagem de saudação
     const t1 = setTimeout(() => {
       setMessages(prev => [...prev, { sender: 'bot', text: 'Olá! Sou o assistente virtual ReUse. Como posso te ajudar hoje?' }]);
     }, 200);
 
-    // 1s: Pergunta complementar
     const t2 = setTimeout(() => {
-      setMessages(prev => [...prev, { sender: 'bot', text: 'Escolha uma das opções rápidas abaixo ou digite o que precisa:' }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: 'Escolha uma das opções rápidas abaixo ou digite onde deseja ir:' }]);
     }, 1200);
 
-    // 2s: Primeira opção (Doação/Venda)
     const t3 = setTimeout(() => {
       setMessages(prev => [...prev, { sender: 'bot', action: { label: '🎁 Registrar Doação/Venda', route: '/desapegar' } }]);
     }, 2200);
 
-    // 3s: Segunda opção (Meus Desapegos)
     const t4 = setTimeout(() => {
       setMessages(prev => [...prev, { sender: 'bot', action: { label: '📦 Meus Desapegos', route: '/painel/desapegos' } }]);
     }, 3200);
 
-    // 4s: Terceira opção (Meus Resgates)
     const t5 = setTimeout(() => {
-      setMessages(prev => [...prev, { sender: 'bot', action: { label: '🎟️ Meus Resgates', route: '/painel' } }]);
+      setMessages(prev => [...prev, { sender: 'bot', action: { label: '🎟️ Meus Resgates', route: '/painel/resgates' } }]);
     }, 4200);
 
-    // 5s: Quarta opção (Itens Salvos)
     const t6 = setTimeout(() => {
       setMessages(prev => [...prev, { sender: 'bot', action: { label: '❤️ Itens Salvos', route: '/painel/salvos' } }]);
     }, 5200);
@@ -69,37 +60,38 @@ export default function ChatBot() {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    setMessages(prev => [...prev, { sender: 'user', text: input }]);
-    const currentInput = input;
+    const userMsg = input;
+    setMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
     setInput('');
 
     try {
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: currentInput }),
+        body: JSON.stringify({ text: userMsg }),
       });
 
       const data = await res.json();
 
       if (data.reply && data.reply.length > 0) {
-        const botTexts = data.reply
-          .filter((r: any) => r.response_type === 'text')
-          .map((r: any) => r.text);
-        
-        botTexts.forEach((text: string) => {
-          setMessages(prev => [...prev, { sender: 'bot', text }]);
+        data.reply.forEach((r: any) => {
+          if (r.response_type === 'text') {
+            setMessages(prev => [...prev, { sender: 'bot', text: r.text }]);
+          }
         });
       }
 
-      if (data.isCriarDesapego) {
+      // Se a IA detectou para onde o usuário quer ir, navega automaticamente!
+      if (data.route) {
+        setMessages(prev => [...prev, { sender: 'bot', text: 'Redirecionando você agora...' }]);
         setTimeout(() => {
           setIsOpen(false);
-          router.push('/desapegar');
-        }, 2000);
+          router.push(data.route);
+        }, 1500);
       }
     } catch (error) {
-      console.error("Falha ao comunicar com a API do Google Gemini", error);
+      console.error("Erro ao falar com o assistente", error);
+      setMessages(prev => [...prev, { sender: 'bot', text: 'Desculpe, tive um problema ao processar seu pedido.' }]);
     }
   };
 
@@ -118,14 +110,8 @@ export default function ChatBot() {
     <>
       <style jsx>{`
         @keyframes slideInLeft {
-          0% {
-            opacity: 0;
-            transform: translateX(-15px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateX(0);
-          }
+          0% { opacity: 0; transform: translateX(-15px); }
+          100% { opacity: 1; transform: translateX(0); }
         }
         .animate-slide-message {
           animation: slideInLeft 0.3s ease-out forwards;
@@ -133,18 +119,14 @@ export default function ChatBot() {
       `}</style>
 
       <div className="fixed bottom-6 right-6 w-80 md:w-[350px] bg-white border border-gray-200 rounded-xl shadow-2xl flex flex-col h-[500px] z-50 overflow-hidden">
-        {/* Cabeçalho do Chat */}
         <div className="bg-earth-900 text-white p-4 font-bold flex justify-between items-center shadow-md">
           <span className="flex items-center gap-2"><Bot className="w-5 h-5 text-white" /> Assistente ReUse</span>
           <button onClick={() => setIsOpen(false)} className="text-white hover:text-gray-300 font-bold text-xl leading-none">&times;</button>
         </div>
         
-        {/* Área de Mensagens */}
         <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 text-sm bg-gray-50 scroll-smooth">
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-              
-              {/* Texto da mensagem */}
               {msg.text && (
                 <div className={`p-3 rounded-2xl max-w-[85%] shadow-sm animate-slide-message mb-1 ${
                   msg.sender === 'user' 
@@ -155,7 +137,6 @@ export default function ChatBot() {
                 </div>
               )}
               
-              {/* Botão de ação individual vindo um a um */}
               {msg.action && (
                 <div className="w-[85%] animate-slide-message">
                   <button 
@@ -170,7 +151,6 @@ export default function ChatBot() {
           ))}
         </div>
         
-        {/* Input de Texto */}
         <div className="p-3 border-t bg-white flex gap-2">
           <input 
             type="text" 
@@ -178,7 +158,7 @@ export default function ChatBot() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="Digite sua mensagem..."
+            placeholder="Digite onde deseja ir..."
           />
           <button 
             onClick={sendMessage} 
